@@ -4,6 +4,7 @@
  */
 import h from "./helpers.js";
 import EventEmitter from "./emitter.js";
+import MetaData from "./metadata.js";
 var TIMEGAP = 6000;
 var allUsers = [];
 var enableHacks = false;
@@ -30,6 +31,7 @@ var myStream;
 var screenStream;
 var socketId;
 var damSocket;
+var metaData;
 
 function initSocket() {
   var roomPeer = "https://livecodestream-us.herokuapp.com/gun";
@@ -102,6 +104,13 @@ window.onbeforeunload = function () {
   });
 };
 
+function metaDataReceived(data) {
+  //TODO @Jabis do stuff here with the data
+  // data.socketId and data.pid should give you what you want
+  //Probably want to filter but didnt know if you wanted it filter on socketId or PID
+  console.log("META::" + JSON.stringify(data));
+}
+
 function initRTC() {
   if (!room) {
     document.querySelector("#room-create").attributes.removeNamedItem("hidden");
@@ -120,6 +129,8 @@ function initRTC() {
     document.getElementById("demo").remove();
 
     socketId = h.uuidv4();
+    metaData = new MetaData(root, room, socketId)
+    metaData.__proto__.onMetaData = metaDataReceived;
 
     console.log("Starting! you are", socketId);
 
@@ -316,6 +327,8 @@ function initRTC() {
 
     document.getElementById("toggle-mute").addEventListener("click", e => {
       e.preventDefault();
+      //TODO @Jabis move this to where you want
+      metaData.sentControlData({ muted: true, status: "online" });
       if (!myStream) return;
       //myStream.getAudioTracks()[0].enabled = !myStream.getAudioTracks()[0].enabled;
       const audioTrack = myStream.getAudioTracks()[0];
